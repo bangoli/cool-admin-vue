@@ -1,78 +1,164 @@
 <template>
-	<div class="demo">
-		<cl-crud @load="onLoad">
-			<el-row>
-				<cl-refresh-btn />
-				<cl-add-btn />
-				<cl-multi-delete-btn />
-				<demo-dialog />
-				<demo-context-menu />
-				<demo-form />
-				<demo-query />
-				<cl-flex1 />
-				<cl-search-key
-					field="name"
-					:field-list="[
-						{ label: '姓名', value: 'name' },
-						{ label: '年龄', value: 'age' }
-					]"
-				/>
-				<demo-adv-search />
-			</el-row>
-			<el-row>
-				<demo-table />
-			</el-row>
-			<el-row>
-				<cl-flex1 />
-				<cl-pagination />
-			</el-row>
-			<demo-upsert />
-		</cl-crud>
-	</div>
+	<cl-crud :ref="setRefs('crud')" @load="onLoad">
+		<el-row type="flex" align="middle">
+			<!-- 刷新按钮 -->
+			<cl-refresh-btn />
+			<!-- 新增按钮 -->
+			<cl-add-btn />
+			<!-- 删除按钮 -->
+			<cl-multi-delete-btn />
+			<cl-flex1 />
+			<!-- 关键字搜索 -->
+			<cl-search-key />
+		</el-row>
+
+		<el-row>
+			<!-- 数据表格 -->
+			<cl-table :ref="setRefs('table')" v-bind="table" />
+		</el-row>
+
+		<el-row type="flex">
+			<cl-flex1 />
+			<!-- 分页控件 -->
+			<cl-pagination />
+		</el-row>
+
+		<!-- 新增、编辑 -->
+		<cl-upsert :ref="setRefs('upsert')" v-bind="upsert" />
+	</cl-crud>
 </template>
+
 <script lang="ts">
-import { defineComponent } from "vue";
-import { TestService } from "../utils/service";
-import Dialog from "../components/crud/dialog.vue";
-import ContextMenu from "../components/crud/context-menu.vue";
-import Query from "../components/crud/query.vue";
-import AdvSearch from "../components/crud/adv-search.vue";
-import Table from "../components/crud/table.vue";
-import Upsert from "../components/crud/upsert.vue";
-import Form from "../components/crud/form.vue";
-import { CrudLoad } from "@cool-vue/crud/types";
+import { defineComponent, reactive } from "vue";
+import { CrudLoad, Table, Upsert } from "@cool-vue/crud/types";
+import { useCool } from "/@/cool";
+
 export default defineComponent({
-	name: "crud",
-	components: {
-		"demo-dialog": Dialog,
-		"demo-context-menu": ContextMenu,
-		"demo-query": Query,
-		"demo-adv-search": AdvSearch,
-		"demo-table": Table,
-		"demo-upsert": Upsert,
-		"demo-form": Form
-	},
+	name: "demo-crud",
+
 	setup() {
+		const { refs, setRefs, service } = useCool();
+
+		// 新增、编辑配置
+		const upsert = reactive<Upsert>({
+			items: [
+				{
+					label: "头像",
+					prop: "headImg",
+					component: { name: "cl-upload" },
+					required: true
+				},
+				{ label: "姓名", prop: "name", required: true, component: { name: "el-input" } },
+				{
+					label: "年龄",
+					prop: "age",
+					component: { name: "el-input-number", props: { min: 0 } },
+					required: true
+				},
+				{
+					label: "出生日期",
+					prop: "birthDate",
+					component: {
+						name: "el-date-picker",
+						props: { type: "date", valueFormat: "YYYY-MM-DD" }
+					},
+					required: true
+				},
+				{
+					label: "出生日期1",
+					prop: "birthTime",
+					component: {
+						name: "el-date-picker",
+						props: { type: "datetime", valueFormat: "YYYY-MM-DD HH:mm:ss" }
+					},
+					required: true
+				},
+				{
+					label: "时间范围",
+					prop: "time",
+					component: {
+						name: "el-date-picker",
+						props: {
+							type: "datetimerange",
+							valueFormat: "YYYY-MM-DD HH:mm:ss",
+							defaultTime: ["2000-01-31T16:00:00.000Z", "2000-02-01T15:59:59.000Z"]
+						}
+					},
+					required: true,
+					hook: "datetimeRange"
+				},
+				{
+					label: "性别",
+					prop: "type",
+					value: 0,
+					component: {
+						name: "el-radio-group",
+						options: [
+							{ label: "未知", value: 0 },
+							{ label: "男", value: 1, color: "#67C23A" },
+							{ label: "女", value: 2, color: "#E6A23C" }
+						]
+					},
+					required: true
+				},
+				{
+					label: "备注",
+					prop: "remark",
+					component: { name: "el-input", props: { type: "textarea", rows: 4 } }
+				}
+			]
+		});
+
+		// 表格配置
+		const table = reactive<Table>({
+			columns: [
+				{ type: "selection" },
+				{ label: "ID", prop: "id" },
+				{
+					label: "头像",
+					prop: "headImg",
+					component: { name: "cl-image", props: { size: 60 } }
+				},
+				{ label: "姓名", prop: "name" },
+				{ label: "年龄", prop: "age" },
+				{
+					label: "出生日期",
+					prop: "birthDate",
+					component: { name: "cl-date", props: { format: "YYYY-MM-DD" } }
+				},
+				{ label: "出生日期1", prop: "birthTime" },
+				{ label: "出生日期2", prop: "startTime" },
+				{ label: "出生日期e", prop: "endTime" },
+				{
+					label: "性别",
+					prop: "type",
+					dict: [
+						{ label: "未知", value: 0 },
+						{ label: "男", value: 1, color: "#67C23A" },
+						{ label: "女", value: 2, color: "#E6A23C" }
+					]
+				},
+				{ label: "备注", prop: "remark", showOverflowTooltip: true },
+				{ label: "创建时间", prop: "createTime" },
+				{ label: "更新时间", prop: "updateTime" },
+				{ type: "op", buttons: ["edit", "delete"] }
+			]
+		});
+
+		// crud 加载
 		function onLoad({ ctx, app }: CrudLoad) {
-			ctx.service(TestService).done();
+			// 绑定 service
+			ctx.service(service.demo.crud).done();
 			app.refresh();
 		}
+
 		return {
+			refs,
+			setRefs,
+			upsert,
+			table,
 			onLoad
 		};
 	}
 });
 </script>
-<style lang="scss">
-html,
-body,
-#app,
-.demo {
-	height: 100%;
-	overflow: hidden;
-}
-* {
-	padding: 0;
-	margin: 0;
-}
-</style>
